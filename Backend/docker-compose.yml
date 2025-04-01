@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  php:
+    container_name: php_container
+    build: ./docker
+    working_dir: /var/www/html  # ✅ Ensures PHP runs in the correct directory
+    volumes:
+      - .:/var/www/html  # ✅ Mount everything (app, public, vendor, etc.)
+    depends_on:
+      - db
+    networks:
+      - flex-work
+
+  nginx:
+    container_name: nginx_container
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+    networks:
+      - flex-work
+
+  db:
+    container_name: mysql_container
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: flexwork_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - flex-work
+
+  phpmyadmin:
+    container_name: phpmyadmin_container
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: root
+    depends_on:
+      - db
+    networks:
+      - flex-work
+
+volumes:
+  db_data:
+
+networks:
+  flex-work:
